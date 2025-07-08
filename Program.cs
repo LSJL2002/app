@@ -114,35 +114,36 @@ namespace TextRpg
                 {
                     Console.WriteLine($"{i + 1}. {jobs[i]}");
                 }
+                string? SelctedJob = Console.ReadLine();
                 
                 while (true)
+                {
+                    Console.WriteLine("\n스파르타 마을에 오신 여러분 환영합니다.");
+                    Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.\n");
+                    Console.WriteLine("1. 상태 보기");
+                    Console.WriteLine("2. 인벤토리");
+                    Console.WriteLine("3. 상점");
+                    Console.Write("\n원하시는 행동을 입력해주세요.\n>> ");
+                    string? input = Console.ReadLine();
+                    switch (input)
                     {
-                        Console.WriteLine("\n스파르타 마을에 오신 여러분 환영합니다.");
-                        Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.\n");
-                        Console.WriteLine("1. 상태 보기");
-                        Console.WriteLine("2. 인벤토리");
-                        Console.WriteLine("3. 상점");
-                        Console.Write("\n원하시는 행동을 입력해주세요.\n>> ");
-                        string? input = Console.ReadLine();
-                        switch (input)
-                        {
-                            case "1":
-                                player.ShowStatus();
-                                while (true)
+                        case "1":
+                            player.ShowStatus();
+                            while (true)
+                            {
+                                string? userinput = Console.ReadLine();
+                                if (userinput != "0")
                                 {
-                                    string? userinput = Console.ReadLine();
-                                    if (userinput != "0")
-                                    {
-                                        Console.WriteLine("잘못된 입력입니다.");
-                                    }
-                                    else
-                                    {
-                                        break;
-                                    }
+                                    Console.WriteLine("잘못된 입력입니다.");
                                 }
-                                break;
-                        }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            break;
                     }
+                }
             }
         }
     }

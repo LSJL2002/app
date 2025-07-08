@@ -12,3 +12,4 @@ c:\Users\PC\Desktop\Coding\TextRpg\app\obj\Debug\net8.0\refint\app.dll
 c:\Users\PC\Desktop\Coding\TextRpg\app\obj\Debug\net8.0\app.pdb
 c:\Users\PC\Desktop\Coding\TextRpg\app\obj\Debug\net8.0\app.genruntimeconfig.cache
 c:\Users\PC\Desktop\Coding\TextRpg\app\obj\Debug\net8.0\ref\app.dll
+c:\Users\PC\Desktop\Coding\TextRpg\app\obj\Debug\net8.0\app.sourcelink.json
