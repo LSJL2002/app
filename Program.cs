@@ -99,6 +99,7 @@ namespace TextRpg
             {
                 while (true)
                 {
+                    Console.Clear();
                     Console.WriteLine($"상점 - 아이템 구매\n필요한 아이템을 얻을 수 있는 상점입니다.\n\n[보유 골드]\n{player.Gold}G");
                     Console.WriteLine("[아이템 목록]");
                     for (int i = 0; i < ShopItem.Count; i++)
@@ -111,6 +112,7 @@ namespace TextRpg
                     string? input = Console.ReadLine();
                     if (input == "0")
                     {
+                        Console.Clear();
                         ShopDisplay(player);
                         break;
                     }
@@ -139,6 +141,12 @@ namespace TextRpg
                             Thread.Sleep(1000);
                         }
                     }
+                    else
+                    {
+                        Console.Clear();
+                        Console.WriteLine("잘못된 입력입니다");
+                        Thread.Sleep(1000);
+                    }
                     
                 }
 
@@ -163,6 +171,53 @@ namespace TextRpg
                 Console.WriteLine("\n1. 장착 관리");
                 Console.WriteLine("0. 나가기");
                 Console.Write("\n원하시는 행동을 입력해주세요.\n>> ");
+            }
+            public static void EquipItems(Player player)
+            {
+                while (true)
+                {
+                    Console.Clear();
+                    Console.WriteLine("인벤토리 - 장착 관리\n보유 중인 아이템을 관리할 수 있습니다.\n");
+                    Console.WriteLine("[아이템 목록]");
+                    for (int i = 0; i < player.Inventory.Count; i++)
+                    {
+                        var item = player.Inventory[i];
+                        Console.WriteLine($"{i + 1}. {item.GetInventoryDisplay()}");
+                    }
+                    Console.WriteLine("\n\n0. 나가기");
+                    Console.WriteLine("원하시는 행동을 입력해주세요.\n>>");
+                    string? input = Console.ReadLine();
+                    if (input == "0")
+                    {
+                        Console.Clear();
+                        ShowInventory(player);
+                        break;
+                    }
+                    if (int.TryParse(input, out int choice) && choice > 0 && choice <= player.Inventory.Count)
+                    {
+                        var choosenEquip = player.Inventory[choice - 1];
+                        if (choosenEquip.Equipped)
+                        {
+                            Console.Clear();
+                            choosenEquip.Equipped = false;
+                            Console.WriteLine($"{choosenEquip.Name}을(를) 장착을 해제했습니다");
+                            Thread.Sleep(1000);
+                        }
+                        else
+                        {
+                            Console.Clear();
+                            choosenEquip.Equipped = true;
+                            Console.WriteLine($"{choosenEquip.Name}을(를) 장착했습니다");
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    else
+                    {
+                        Console.Clear();
+                        Console.WriteLine("잘못된 입력입니다");
+                        Thread.Sleep(1000);
+                    }
+                }
             }
         }
 
@@ -202,6 +257,7 @@ namespace TextRpg
 
                 while (true)
                 {
+                    Console.Clear();
                     Console.WriteLine("\n스파르타 마을에 오신 여러분 환영합니다.");
                     Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.\n");
                     Console.WriteLine("1. 상태 보기");
@@ -233,13 +289,18 @@ namespace TextRpg
                             while (true)
                             {
                                 string? userinput = Console.ReadLine();
-                                if (userinput != "0")
+                                if (userinput == "1")
                                 {
-                                    Console.WriteLine("잘못된 입력입니다.");
+                                    Console.Clear();
+                                    Inventory.EquipItems(player);
+                                }
+                                else if (userinput == "0")
+                                {
+                                    break;
                                 }
                                 else
                                 {
-                                    break;
+                                    Console.WriteLine("잘못된 입력입니다");
                                 }
                             }
                             break;
@@ -248,7 +309,6 @@ namespace TextRpg
                             Shop.ShopDisplay(player);
                             while (true)
                             {
-                                Shop.ShopDisplay(player);
                                 string? userinput = Console.ReadLine();
                                 if (userinput == "0")
                                     break;
