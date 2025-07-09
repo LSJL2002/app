@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\app.csproj": {}
+    "C:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\app.csproj": {}
   },
   "projects": {
-    "c:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\app.csproj": {
+    "C:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\app.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\app.csproj",
+        "projectUniqueName": "C:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\app.csproj",
         "projectName": "app",
-        "projectPath": "c:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\app.csproj",
+        "projectPath": "C:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\app.csproj",
         "packagesPath": "C:\\Users\\PC\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\obj\\",
+        "outputPath": "C:\\Users\\PC\\Desktop\\Coding\\TextRpg\\app\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\PC\\AppData\\Roaming\\NuGet\\NuGet.Config"
