@@ -112,34 +112,16 @@ namespace TextRpg
                 int equipSpeed = 0;
                 foreach (var item in Inventory)
                 {
-                    if (item.Equipped)
-                    {
-                        if (item.Type == "공격력")
-                        {
-                            equipAttack += item.Value;
-                        }
-                    }
-                    else if (item.Equipped)
-                    {
-                        if (item.Type == "방어력")
-                        {
-                            equipDefense += item.Value;
-                        }
-                    }
-                    else if (item.Equipped)
-                    {
-                        if (item.Type == "체력")
-                        {
-                            equipHealth += item.Value;
-                        }
-                    }
-                    else if (item.Equipped)
-                    {
-                        if (item.Type == "속도")
-                        {
-                            equipSpeed += item.Value;
-                        }
-                    }
+                    if (!item.Equipped)
+                        continue;
+                    if (item.Type == "공격력")
+                        equipAttack += item.Value;
+                    else if (item.Type == "방어력")
+                        equipDefense += item.Value;
+                    else if (item.Type == "체력")
+                        equipHealth += item.Value;
+                    else if (item.Type == "속도")
+                        equipSpeed += item.Value;
                 }
 
                 string attackDisplay = equipAttack > 0 ? $"{Attack + equipAttack} (+{equipAttack})" : $"{Attack}";
@@ -181,10 +163,30 @@ namespace TextRpg
                 string equippedMark = Equipped ? "[E]" : "   ";
                 return $"- {equippedMark}{Name} | {Type} +{Value} | {Description}";
             }
+
+            private string PadDisplay(string input, int totalWidth)
+            {
+                int displayWidth = 0;
+                foreach (char c in input)
+                {
+                    // 한글, 한자 등은 2칸 차지
+                    displayWidth += (c >= 0xAC00 && c <= 0xD7A3) ? 2 : 1;
+                }
+
+                int padding = Math.Max(0, totalWidth - displayWidth);
+                return input + new string(' ', padding);
+            }
+
             public string ShopDisplayPanel()
             {
                 string priceDisplay = IsPurchased ? "구매완료" : $"{Price}G";
-                return $"{Name} | {Type} + {Value} | {Description} | {priceDisplay}";
+
+                string namePadded = PadDisplay(Name, 20);
+                string typeValue = PadDisplay($"{Type} +{Value}", 12);
+                string descPadded = PadDisplay(Description, 50);
+                string pricePadded = PadDisplay(priceDisplay, 10);
+
+                return $"{namePadded}| {typeValue}| {descPadded}| {pricePadded}";
             }
         }
 
@@ -192,7 +194,19 @@ namespace TextRpg
         {
             public static List<Item> ShopItem = new List<Item>
             {
-                new Item ("철검", "공격력",10,"쉽게 볼 수 있는 낡은 검 입니다.",300)
+                new Item ("수련자 갑옷", "방어력",5,"수련에 도움을 주는 갑옷입니다.",1000),
+                new Item ("무쇠 갑옷", "방어력", 9,"무쇠로 만들어져 튼튼한 갑옷입니다.", 1500),
+                new Item ("스프라타의 갑옷", "방어력", 15,"스파르타의 전사들이 사용했다는 전설의 갑옷입니다.", 3500),
+                new Item ("낡은 검", "공격력", 5, "쉽게 볼 수 있는 낡은 검 입니다.", 1000),
+                new Item ("청동 도끼", "공격력",10, "어디선가 사용됐던거 같은 도끼입니다.",1500),
+                new Item ("스파르타의 창", "공격력",20,"스파르타의 전사들이 사용했다는 전설의 창입니다.", 3500),
+                new Item ("머리띠", "체력", 10, "그냥 머리띠입니다.", 1000),
+                new Item ("투구 ", "체력", 30, "쇠로 만들어진 투구입니다.",1500),
+                new Item ("스프르타의 투구", "체력", 80, "스파르타의 전사들이 사용했다는 전설의 투구입니다.", 3500),
+                new Item ("샌들", "속도", 3, "샌들입니다, 그냥 샌들입니다.", 1000),
+                new Item ("쇠 부츠", "속도", 9, "쇠로 만들어진 부츠입니다.", 1500),
+                new Item ("스파르타의 부츠", "속도", 15, "스파르타의 전사들이 신었다는 전설의 부츠입니다.", 3500),
+                new Item ("키보드", "공격", 90, "이게 왜?", 9999)
             };
 
             public static void ShopDisplay(Player player)
@@ -218,7 +232,7 @@ namespace TextRpg
                     for (int i = 0; i < ShopItem.Count; i++)
                     {
                         var item = ShopItem[i];
-                        Console.WriteLine($"{i + 1}. {item.ShopDisplayPanel()}");
+                        Console.WriteLine($"{(i + 1).ToString().PadLeft(2)}. {item.ShopDisplayPanel()}");
                     }
                     Console.WriteLine("\n0. 상점으로 돌아가기");
                     Console.Write("\n원하시는 행동을 입력해주세요.\n>> ");
