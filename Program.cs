@@ -2,12 +2,14 @@
 using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.Tracing;
 using System.Formats.Asn1;
 using System.Globalization;
 using System.Numerics;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using Microsoft.VisualBasic;
 
 namespace TextRpg
@@ -28,7 +30,8 @@ namespace TextRpg
             public int Health { get; set; } = 100;
             public int CurrentHealth { get; set; }
             public int Speed { get; set; } = 5;
-            public int Gold { get; set; } = 1500;
+            public int Gold { get; set; } = 9999;
+            public int Xp { get; set; } = 100;
             public List<Item> Inventory { get; set; } = new List<Item>();
 
             public int TotalAttack
@@ -146,6 +149,7 @@ namespace TextRpg
             public int Value { get; set; }
             public string Description { get; set; }
             public int Price { get; set; }
+            public int SellPrice { get; set; }
             public bool Equipped { get; set; }
             public bool IsPurchased { get; set; }
             public Item(string name, string type, int value, string description, int price)
@@ -155,6 +159,7 @@ namespace TextRpg
                 Value = value;
                 Description = description;
                 Price = price;
+                SellPrice = (int)(price * 0.85);
             }
             public string GetInventoryDisplay()
             {
@@ -186,6 +191,17 @@ namespace TextRpg
 
                 return $"{namePadded}| {typeValue}| {descPadded}| {pricePadded}";
             }
+            public string SellDisplayPanel()
+            {
+                string priceDisplay = IsPurchased ? "구매완료" : $"{Price}G";
+
+                string namePadded = PadDisplay(Name, 20);
+                string typeValue = PadDisplay($"{Type} +{Value}", 12);
+                string descPadded = PadDisplay(Description, 50);
+                string pricePadded = PadDisplay(priceDisplay, 10);
+
+                return $"{namePadded}| {typeValue}| {descPadded}| {Price * 0.85}G";
+            }
         }
 
         public class Shop
@@ -216,8 +232,58 @@ namespace TextRpg
                     var item = ShopItem[i];
                     Console.WriteLine($"- {item.ShopDisplayPanel()}");
                 }
-                Console.WriteLine("\n1. 아이템 구매\n0. 나가기");
+                Console.WriteLine("\n1. 아이템 구매\n2. 아이템 판매\n0. 나가기");
                 Console.Write("\n원하시는 행동을 입력해주세요.\n>> ");
+            }
+
+            public static void SellItem(Player player)
+            {
+                while (true)
+                {
+                    Console.Clear();
+                    Console.WriteLine($"상점 - 아이템 판매\n필요없는 아이템을 판매할 수 있는 상점입니다.\n\n[보유 골드]\n{player.Gold}G");
+                    Console.WriteLine("[아이템 목록]");
+                    if (player.Inventory.Count == 0)
+                    {
+                        Console.WriteLine("인벤토리에 아무것도 없습니다");
+                    }
+                    else
+                    {
+                        for (int i = 0; i < player.Inventory.Count; i++)
+                        {
+                            var item = player.Inventory[i];
+                            Console.WriteLine($"{i + 1}. {item.SellDisplayPanel()}");
+                        }
+                    }
+                    Console.WriteLine("\n0. 상점으로 돌아가기");
+                    Console.Write("\n원하시는 행동을 입력해주세요.\n>> ");
+                    string? input = Console.ReadLine();
+                    if (input == "0")
+                    {
+                        Console.Clear();
+                        ShopDisplay(player);
+                        break;
+                    }
+                    if (int.TryParse(input, out int choice) && choice >= 1 && choice <= player.Inventory.Count)
+                    {
+                        var choosenItem = ShopItem[choice - 1];
+                        if (choosenItem != null)
+                        {
+                            Console.Clear();
+                            Console.WriteLine($"Selling Item Debug Giving {choosenItem.SellPrice}G");
+                            player.Inventory.Remove(choosenItem);
+                            choosenItem.IsPurchased = false;
+                            player.Gold += choosenItem.SellPrice;
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    else
+                    {
+                        Console.Clear();
+                        Console.WriteLine("잘못된 입력입니다");
+                        Thread.Sleep(1000);
+                    }
+                }
             }
 
             public static void PurchaseItem(Player player)
@@ -272,7 +338,7 @@ namespace TextRpg
                         Console.WriteLine("잘못된 입력입니다");
                         Thread.Sleep(1000);
                     }
-                    
+
                 }
 
             }
@@ -321,6 +387,15 @@ namespace TextRpg
                     if (int.TryParse(input, out int choice) && choice > 0 && choice <= player.Inventory.Count)
                     {
                         var choosenEquip = player.Inventory[choice - 1];
+                        bool typeEquipped = false;
+                        foreach (var item in player.Inventory)
+                        {
+                            if (item.Equipped && item.Type == choosenEquip.Type)
+                            {
+                                typeEquipped = true;
+                                break;
+                            }
+                        }
                         if (choosenEquip.Equipped)
                         {
                             Console.Clear();
@@ -328,7 +403,13 @@ namespace TextRpg
                             Console.WriteLine($"{choosenEquip.Name}을(를) 장착을 해제했습니다");
                             Thread.Sleep(1000);
                         }
-                        else
+                        else if (typeEquipped)
+                        {
+                            Console.Clear();
+                            Console.WriteLine($"이미 같은 종류의 아이템을 장착하고 있습니다. {choosenEquip.Type}");
+                            Thread.Sleep(1000);
+                        }
+                        else   
                         {
                             Console.Clear();
                             choosenEquip.Equipped = true;
@@ -359,10 +440,174 @@ namespace TextRpg
             }
         }
 
+        public class Monster
+        {
+            public string Name { get; set; }
+            public int MonsterHealth { get; set; }
+            public int MonsterAttack { get; set; }
+            public int MonsterDefense { get; set; }
+            public int MonsterSpeed { get; set; }
+            public int MonsterDropXP { get; set; }
+            public Monster(string name, int hp, int attack, int defense, int speed, int xp)
+            {
+                Name = name;
+                MonsterHealth = hp;
+                MonsterAttack = attack;
+                MonsterDefense = defense;
+                MonsterSpeed = speed;
+                MonsterDropXP = xp; 
+            }
+        }
+
+        public static class Dungeon
+        {
+            static List<Monster> beginnerMonsters = new List<Monster>
+            {
+                new Monster("슬라임", 30, 5, 2, 1, 10),
+                new Monster("고블린", 40, 7, 3, 2, 15),
+                new Monster("야생 멧돼지", 50, 8, 4, 3, 20)
+            };
+            static List<Monster> MiddleMonsters = new List<Monster>
+            {
+                new Monster("슬라임", 30, 5, 2, 1, 10),
+                new Monster("고블린", 40, 7, 3, 2, 15),
+                new Monster("야생 멧돼지", 50, 8, 4, 3, 20)
+            };
+            static List<Monster> EndMonsters = new List<Monster>
+            {
+                new Monster("르탄이", 200, 50, 30, 10, 300)
+            };
+
+            public static void EncoutnerMonster(Player player, int dungeonNumber)
+            {
+                Random rng = new Random();
+                Monster selected = null;
+                switch (dungeonNumber)
+                {
+                    case 1:
+                        selected = beginnerMonsters[rng.Next(beginnerMonsters.Count)];
+                        break;
+                    case 2:
+                        selected = MiddleMonsters[rng.Next(MiddleMonsters.Count)];
+                        break;
+                    case 3:
+                        selected = EndMonsters[rng.Next(EndMonsters.Count)];
+                        break;
+                    default:
+                        Console.WriteLine("잘못된 던전 번호입니다.");
+                        Thread.Sleep(1000);
+                        break;
+                }
+                Console.Clear();
+                Console.WriteLine("몬스터를 만났습니다!\n");
+                Console.WriteLine($"이름: {selected.Name}");
+                Console.WriteLine($"체력: {selected.MonsterHealth}");
+                Console.WriteLine($"공격력: {selected.MonsterAttack}");
+                Console.WriteLine($"방어력: {selected.MonsterDefense}");
+                Console.WriteLine($"속도: {selected.MonsterSpeed}");
+                Console.WriteLine("\n\n전투 준비");
+                CombatSystem(player, selected);
+                Thread.Sleep(3000);
+            }
+
+            public static void CombatSystem(Player player, Monster monster)
+            {
+                int monsterHP = monster.MonsterHealth;
+
+                Console.Clear();
+                while (player.CurrentHealth > 0 && monsterHP > 0)
+                {
+                    Console.WriteLine("=========전투 시작========\n\n\n\n");
+                    Console.WriteLine($"\n{player.PlayerName} HP: {player.CurrentHealth}/{player.TotalHealth}");
+                    Console.WriteLine($"{monster.Name} HP: {monsterHP}");
+                    Console.WriteLine("1.공격하기");
+                    Console.WriteLine("원하시는 행동을 입력해주세요.\n>>");
+                    string? input = Console.ReadLine();
+                }
+            }
+            public static void FirstDungeon()
+            {
+                int dungeonNumber = 1;
+                int currentRoom = 0; // Room index: 0, 1, 2
+                int maxRooms = 3;
+
+                while (true)
+                {
+                    Console.Clear();
+
+                    // Draw top line
+                    Console.WriteLine(" __________   __________   __________");
+                    Console.WriteLine("|          | |          | |          |");
+
+                    // Draw middle line with player 'O'
+                    for (int i = 0; i < maxRooms; i++)
+                    {
+                        if (i == currentRoom)
+                            Console.Write("|    O     |=");
+                        else
+                            Console.Write("|          |=");
+                    }
+                    Console.WriteLine();
+
+                    // Draw connectors and bottom
+                    Console.WriteLine("|__________|=|__________|=|__________|");
+                    Console.WriteLine("\n\n초바자의 던전에 오신걸 환영합니다");
+                    Console.WriteLine("1.다음 방으로 이동하기\n2.상태보기");
+                    Console.WriteLine("원하시는 행동을 입력해주세요.\n>>");
+                    string? input = Console.ReadLine();
+                    if (input == "1")
+                    {
+                        Console.Clear();
+                        Console.WriteLine("다음 방으로 이동중.");
+                        Thread.Sleep(1000);
+                        Console.Clear();
+                        Console.WriteLine("다음 방으로 이동중..");
+                        Thread.Sleep(1000);
+                        Console.Clear();
+                        Console.WriteLine("다음 방으로 이동중...");
+                        Thread.Sleep(1000);
+                        Console.Clear();
+                        EncoutnerMonster(GameLoop.player, dungeonNumber);
+                    }
+                }
+            }
+            public static void ShowDungeonEntrance()
+            {
+                Console.WriteLine(@"
+                 ______   __   __  __    _  _______  _______  _______  __    _ 
+                |  _    ||  | |  ||   |_| ||    ___||    ___||   _   ||   |_| |
+                | | |   ||  |_|  ||       ||   | __ |   |___ |  | |  ||       |
+                | |_|   ||       ||  _    ||   ||  ||    ___||  |_|  ||  _    |
+                |       ||       || | |   ||   |_| ||   |___ |       || | |   |
+                |______| |_______||_|  |__||_______||_______||_______||_|  |__|
+                            ⠀⠀⠀⠀⠀⠀⠀⢠⣴⣾⣷⠈⣿⣿⣿⣿⣿⡟⢀⣿⣶⣤⠀⠀⠀⠀⠀⠀⠀⠀
+                            ⠀⠀⠀⠀⢠⣾⣷⡄⠻⣿⣿⣧⠘⣿⣿⣿⡿⠀⣾⣿⣿⠃⣰⣿⣶⣄⠀⠀⠀⠀
+                            ⠀⠀⠀⣴⣿⣿⣿⡿⠆⠉⠉⠁⠀⠈⠉⠉⠁⠀⠙⠛⠃⢰⣿⣿⣿⣿⣷⡀⠀⠀
+                            ⠀⠀⣼⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠉⢿⣿⣿⣿⣷⠀⠀
+                            ⠀⠘⠛⠛⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠻⠛⠛⠛⠃⠀
+                            ⠀⢸⣿⣿⣿⡇⠀⠀⣀⣰⡄⠀⠀⠀⠀⠀⠀⠀⠀  ⢠⣶⣠⠀⠀ ⢰⣾⣿⣿⡇⠀
+                            ⠀⢸⡿⠿⠿⠇⠀⢟⠉⠁⣳⠀⠀⠀⠀⠀⠀⠀⠀ ⣿⠈⠈⡿⠀ ⢸⣿⣿⣿⡇⠀
+                            ⠀⣤⣤⣴⣶⡆⠀⢠⣀⡀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠈ ⢀⣤⡀⠀ ⠘⠿⠿⠿⠇⠀
+                            ⠀⣿⣿⣿⣿⣷⠀⢸⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⢿⡇⠀  ⣶⣶⣶⣶⣶⠀
+                            ⠀⣿⣿⣿⣿⣿⠀⠚⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠘⠃⠀ ⣿⣿⣿⣿⣿⠀
+                            ⠀⠛⠛⠛⠛⢛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠙⠛⠛⠋⣁⠀
+                            ⠀⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⣿⣿⣿⣿⣿⠀
+                ");
+                Console.WriteLine("\n\n던전 입장하시겠습니까?\n1. 초보자의 더전\n2. 중급자의\n3. 르탄이의 던전");
+                Console.WriteLine("0. 나가기\n\n");
+                Console.WriteLine("원하시는 행동을 입력해주세요.\n>>");
+                string? input = Console.ReadLine();
+                if (input == "1")
+                {
+                    FirstDungeon();
+                }
+            }
+
+        }
+
         public static class GameLoop
         {
-            static Player player;
-
+            public static Player player;
             public static void ErrorMessage()
             {
                 Console.Clear();
@@ -410,6 +655,7 @@ namespace TextRpg
                     Console.WriteLine("2. 인벤토리");
                     Console.WriteLine("3. 상점");
                     Console.WriteLine("4. 휴식취하기 (500G)");
+                    Console.WriteLine("5. 던전 입장하기");
                     Console.Write("\n원하시는 행동을 입력해주세요.\n>> ");
                     string? input = Console.ReadLine();
                     switch (input)
@@ -462,6 +708,8 @@ namespace TextRpg
                                     break;
                                 else if (userinput == "1")
                                     Shop.PurchaseItem(player);
+                                else if (userinput == "2")
+                                    Shop.SellItem(player);
                                 else
                                 {
                                     ErrorMessage();
@@ -496,6 +744,18 @@ namespace TextRpg
                                 else
                                 {
                                     ErrorMessage();
+                                }
+                            }
+                            break;
+                        case "5":
+                            while (true)
+                            {
+                                Console.Clear();
+                                Dungeon.ShowDungeonEntrance();
+                                string? userinput = Console.ReadLine();
+                                if (userinput == "0")
+                                {
+                                    break;
                                 }
                             }
                             break;
