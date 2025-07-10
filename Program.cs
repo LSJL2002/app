@@ -1,16 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.Tracing;
-using System.Formats.Asn1;
-using System.Globalization;
-using System.Numerics;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using Microsoft.VisualBasic;
 
 namespace TextRpg
 {
@@ -30,8 +18,8 @@ namespace TextRpg
             public int Health { get; set; } = 100;
             public int CurrentHealth { get; set; }
             public int Speed { get; set; } = 5;
-            public int Gold { get; set; } = 9999;
-            public int Xp { get; set; } = 100;
+            public int Gold { get; set; } = 1500;
+            public int Xp { get; set; } = 0;
             public List<Item> Inventory { get; set; } = new List<Item>();
 
             public int TotalAttack
@@ -100,7 +88,7 @@ namespace TextRpg
             public Player(string name)
             {
                 PlayerName = name;
-                CurrentHealth = Health; 
+                CurrentHealth = Health;
             }
 
 
@@ -138,8 +126,29 @@ namespace TextRpg
                 Console.WriteLine($"방어: {defenseDisplay}");
                 Console.WriteLine($"속도: {speedDisplay}");
                 Console.WriteLine($"Gold : {Gold} G");
+                Console.WriteLine($"XP: {Xp} / {100 * Level}");
                 Console.WriteLine("\n0. 나가기\n");
                 Console.Write("\n원하시는 행동을 입력해주세요.\n>> ");
+            }
+
+            public void CheckLevelUp()
+            {
+                while (Xp >= 100 * Level)
+                {
+                    Xp -= 100 * Level;
+                    Level++;
+                    Attack += 2;
+                    Defense += 2;
+                    Health += 10;
+                    Speed += 1;
+                    CurrentHealth = TotalHealth;
+
+                    Console.Clear();
+                    Console.WriteLine($"레벨업! 현재 레벨: {Level}");
+                    Console.WriteLine("능력치가 상승했습니다!");
+                    Console.WriteLine($"+ 공격력: {Attack}, 방어력: {Defense}, 체력: {Health}, 속도: {Speed}");
+                    Thread.Sleep(2000);
+                }
             }
         }
         public class Item //Items that will be both displayed on player and shop
@@ -448,14 +457,16 @@ namespace TextRpg
             public int MonsterDefense { get; set; }
             public int MonsterSpeed { get; set; }
             public int MonsterDropXP { get; set; }
-            public Monster(string name, int hp, int attack, int defense, int speed, int xp)
+            public int MonsterDropGold { get; set; }
+            public Monster(string name, int hp, int attack, int defense, int speed, int xp, int gold)
             {
                 Name = name;
                 MonsterHealth = hp;
                 MonsterAttack = attack;
                 MonsterDefense = defense;
                 MonsterSpeed = speed;
-                MonsterDropXP = xp; 
+                MonsterDropXP = xp;
+                MonsterDropGold = gold;
             }
         }
 
@@ -463,22 +474,22 @@ namespace TextRpg
         {
             static List<Monster> beginnerMonsters = new List<Monster>
             {
-                new Monster("슬라임", 30, 5, 2, 1, 10),
-                new Monster("고블린", 40, 7, 3, 2, 15),
-                new Monster("야생 멧돼지", 50, 8, 4, 3, 20)
+                new Monster("슬라임", 30, 5, 2, 1, 5, 100),
+                new Monster("고블린", 40, 7, 3, 2, 9, 150),
+                new Monster("야생 멧돼지", 50, 8, 4, 20, 20, 100)
             };
             static List<Monster> MiddleMonsters = new List<Monster>
             {
-                new Monster("슬라임", 30, 5, 2, 1, 10),
-                new Monster("고블린", 40, 7, 3, 2, 15),
-                new Monster("야생 멧돼지", 50, 8, 4, 3, 20)
+                new Monster("골드 슬라임", 100, 1, 10, 1, 100, 1000),
+                new Monster("스켈레톤", 60, 12, 3, 8, 20, 300),
+                new Monster("좀피", 70, 10, 5, 3, 30, 300)
             };
             static List<Monster> EndMonsters = new List<Monster>
             {
-                new Monster("르탄이", 200, 50, 30, 10, 300)
+                new Monster("르탄이", 200, 50, 30, 10, 300, 2000)
             };
 
-            public static void EncoutnerMonster(Player player, int dungeonNumber)
+            public static Monster EncoutnerMonster(Player player, int dungeonNumber)
             {
                 Random rng = new Random();
                 Monster selected = null;
@@ -506,11 +517,11 @@ namespace TextRpg
                 Console.WriteLine($"방어력: {selected.MonsterDefense}");
                 Console.WriteLine($"속도: {selected.MonsterSpeed}");
                 Console.WriteLine("\n\n전투 준비");
-                CombatSystem(player, selected);
                 Thread.Sleep(3000);
+                return selected;
             }
 
-            public static void CombatSystem(Player player, Monster monster)
+            public static bool CombatSystem(Player player, Monster monster)
             {
                 int monsterHP = monster.MonsterHealth;
 
@@ -518,28 +529,110 @@ namespace TextRpg
                 while (player.CurrentHealth > 0 && monsterHP > 0)
                 {
                     Console.WriteLine("=========전투 시작========\n\n\n\n");
-                    Console.WriteLine($"\n{player.PlayerName} HP: {player.CurrentHealth}/{player.TotalHealth}");
-                    Console.WriteLine($"{monster.Name} HP: {monsterHP}");
-                    Console.WriteLine("1.공격하기");
+                    Console.WriteLine($"\n{player.PlayerName} HP: {player.CurrentHealth}/{player.TotalHealth}\n");
+                    Console.WriteLine("VS\n");
+                    Console.WriteLine($"{monster.Name} HP: {monsterHP}\n\n");
+                    Console.WriteLine("1.공격하기\n");
                     Console.WriteLine("원하시는 행동을 입력해주세요.\n>>");
                     string? input = Console.ReadLine();
+
+                    if (input == "1")
+                    {
+                        Console.Clear();
+
+                        bool pirority = false;
+                        if (player.TotalSpeed >= monster.MonsterSpeed)
+                        {
+                            pirority = true;
+                        }
+                        else if (player.TotalSpeed < monster.MonsterSpeed)
+                        {
+                            pirority = false;
+                        }
+
+                        if (pirority)
+                        {
+                            int playerDamage = Math.Max(player.TotalAttack - monster.MonsterDefense, 1);
+                            monsterHP -= playerDamage;
+                            Console.WriteLine($"{player.PlayerName}이(가) 먼저 공격하여 {playerDamage}의 피해를 입혔습니다!");
+                            Thread.Sleep(2000);
+                            if (monsterHP <= 0)
+                            {
+                                Console.WriteLine($"{monster.Name}이 쓰려졌습니다.");
+                                Console.WriteLine($"==========보상========");
+                                Console.WriteLine($"경험치: {monster.MonsterDropXP}");
+                                Console.WriteLine($"골드: {monster.MonsterDropGold}");
+                                player.Xp += monster.MonsterDropXP;
+                                player.Gold += monster.MonsterDropGold;
+                                Thread.Sleep(2000);
+                                player.CheckLevelUp();
+                                Thread.Sleep(2000);
+                                return true;
+                            }
+                            int monsterDamage = Math.Max(monster.MonsterAttack - player.TotalDefense, 1);
+                            player.CurrentHealth -= monsterDamage;
+                            Console.WriteLine($"{monster.Name}이(가) 반격하여 {monsterDamage}의 피해를 입혔습니다!");
+                            Thread.Sleep(1000);
+                            if (player.CurrentHealth <= 0)
+                            {
+                                player.CurrentHealth = 0;
+                                Console.WriteLine("당신은 쓰러졌습니다... 게임 오버!");
+                                Thread.Sleep(2000);
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            int monsterDamage = Math.Max(monster.MonsterAttack - player.TotalDefense, 1);
+                            player.CurrentHealth -= monsterDamage;
+                            Console.WriteLine($"{monster.Name}이(가) 먼저 공격하여 {monsterDamage}의 피해를 입혔습니다!");
+                            Thread.Sleep(1000);
+                            if (player.CurrentHealth <= 0)
+                            {
+                                player.CurrentHealth = 0;
+                                Console.WriteLine("당신은 쓰러졌습니다... 게임 오버!");
+                                Thread.Sleep(2000);
+                                return false;
+                            }
+                            int playerDamage = Math.Max(player.TotalAttack - monster.MonsterDefense, 1);
+                            monsterHP -= playerDamage;
+                            Console.WriteLine($"{player.PlayerName}이(가) 반격하여 {playerDamage}의 피해를 입혔습니다!");
+                            Thread.Sleep(2000);
+                            if (monsterHP <= 0)
+                            {
+                                Console.WriteLine($"{monster.Name}이 쓰려졌습니다.");
+                                Console.WriteLine($"==========보상========");
+                                Console.WriteLine($"경험치: {monster.MonsterDropXP}");
+                                Console.WriteLine($"골드: {monster.MonsterDropGold}");
+                                player.Xp += monster.MonsterDropXP;
+                                player.Gold += monster.MonsterDropGold;
+                                Thread.Sleep(2000);
+                                player.CheckLevelUp();
+                                Thread.Sleep(2000);
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.Clear();
+                        Console.WriteLine("잘못된 입력입니다");
+                        Thread.Sleep(1000);
+                    }
                 }
+                return player.CurrentHealth > 0;
             }
-            public static void FirstDungeon()
+            public static void EnterDungeon(int dungeonNumber)
             {
-                int dungeonNumber = 1;
-                int currentRoom = 0; // Room index: 0, 1, 2
+                int currentRoom = 0;
                 int maxRooms = 3;
 
-                while (true)
+                while (currentRoom < maxRooms)
                 {
                     Console.Clear();
-
-                    // Draw top line
                     Console.WriteLine(" __________   __________   __________");
                     Console.WriteLine("|          | |          | |          |");
 
-                    // Draw middle line with player 'O'
                     for (int i = 0; i < maxRooms; i++)
                     {
                         if (i == currentRoom)
@@ -548,29 +641,56 @@ namespace TextRpg
                             Console.Write("|          |=");
                     }
                     Console.WriteLine();
-
-                    // Draw connectors and bottom
                     Console.WriteLine("|__________|=|__________|=|__________|");
-                    Console.WriteLine("\n\n초바자의 던전에 오신걸 환영합니다");
+                    Console.WriteLine("\n\n던전에 오신걸 환영합니다");
                     Console.WriteLine("1.다음 방으로 이동하기\n2.상태보기");
                     Console.WriteLine("원하시는 행동을 입력해주세요.\n>>");
+
                     string? input = Console.ReadLine();
+
                     if (input == "1")
                     {
                         Console.Clear();
                         Console.WriteLine("다음 방으로 이동중.");
-                        Thread.Sleep(1000);
+                        Thread.Sleep(2000);
                         Console.Clear();
                         Console.WriteLine("다음 방으로 이동중..");
-                        Thread.Sleep(1000);
+                        Thread.Sleep(2000);
                         Console.Clear();
                         Console.WriteLine("다음 방으로 이동중...");
-                        Thread.Sleep(1000);
+                        Thread.Sleep(2000);
+
+                        Monster monster = EncoutnerMonster(GameLoop.player, dungeonNumber);
+                        bool survived = CombatSystem(GameLoop.player, monster);
+
+                        if (!survived)
+                        {
+                            Console.WriteLine("던전에서 쓰러졌습니다. 마을로 돌아갑니다...");
+                            Thread.Sleep(2000);
+                            return;
+                        }
+
+                        currentRoom++;
+                    }
+                    else if (input == "2")
+                    {
                         Console.Clear();
-                        EncoutnerMonster(GameLoop.player, dungeonNumber);
+                        GameLoop.player.ShowStatus();
+                        Console.ReadLine();
+                    }
+                    else
+                    {
+                        Console.WriteLine("잘못된 입력입니다");
+                        Thread.Sleep(1000);
                     }
                 }
+
+                Console.Clear();
+                Console.WriteLine("던전 클리어! 마을로 돌아갑니다...");
+                Thread.Sleep(2000);
             }
+
+
             public static void ShowDungeonEntrance()
             {
                 Console.WriteLine(@"
@@ -596,11 +716,6 @@ namespace TextRpg
                 Console.WriteLine("\n\n던전 입장하시겠습니까?\n1. 초보자의 더전\n2. 중급자의\n3. 르탄이의 던전");
                 Console.WriteLine("0. 나가기\n\n");
                 Console.WriteLine("원하시는 행동을 입력해주세요.\n>>");
-                string? input = Console.ReadLine();
-                if (input == "1")
-                {
-                    FirstDungeon();
-                }
             }
 
         }
@@ -756,6 +871,18 @@ namespace TextRpg
                                 if (userinput == "0")
                                 {
                                     break;
+                                }
+                                else if (userinput == "1")
+                                {
+                                    Dungeon.EnterDungeon(1);
+                                }
+                                else if (userinput == "2")
+                                {
+                                    Dungeon.EnterDungeon(2);
+                                }
+                                else if (userinput == "3")
+                                {
+                                    Dungeon.EnterDungeon(3);
                                 }
                             }
                             break;
