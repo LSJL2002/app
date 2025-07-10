@@ -94,8 +94,6 @@ namespace TextRpg
                     return total;
                 }
             }
-
-
             public Player(string name)
             {
                 PlayerName = name;
