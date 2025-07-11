@@ -184,13 +184,13 @@ namespace TextRpg
                 {
                     Console.Clear();
                     Console.WriteLine("다음 방으로 이동중.");
-                    Thread.Sleep(2000);
+                    Thread.Sleep(500);
                     Console.Clear();
                     Console.WriteLine("다음 방으로 이동중..");
-                    Thread.Sleep(2000);
+                    Thread.Sleep(500);
                     Console.Clear();
                     Console.WriteLine("다음 방으로 이동중...");
-                    Thread.Sleep(2000);
+                    Thread.Sleep(500);
 
                     Monster monster = EncoutnerMonster(GameLoop.player, dungeonNumber);
                     bool survived = CombatSystem(GameLoop.player, monster);
