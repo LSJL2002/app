@@ -64,11 +64,11 @@ namespace TextRpg
                 }
                 if (int.TryParse(input, out int choice) && choice >= 1 && choice <= player.Inventory.Count)
                 {
-                    var choosenItem = ShopItem[choice - 1];
+                    var choosenItem = player.Inventory[choice - 1];
                     if (choosenItem != null)
                     {
                         Console.Clear();
-                        Console.WriteLine($"Selling Item Debug Giving {choosenItem.SellPrice}G");
+                        Console.WriteLine($"{choosenItem.Name}을 {choosenItem.SellPrice}G 판매했습니다.");
                         player.Inventory.Remove(choosenItem);
                         choosenItem.IsPurchased = false;
                         player.Gold += choosenItem.SellPrice;

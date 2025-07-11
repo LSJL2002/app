@@ -12,7 +12,7 @@ namespace TextRpg
         public int Health { get; set; } = 100;
         public int CurrentHealth { get; set; }
         public int Speed { get; set; } = 5;
-        public int Gold { get; set; } = 1500;
+        public int Gold { get; set; } = 4000;
         public int Xp { get; set; } = 0;
         public List<Item> Inventory { get; set; } = new List<Item>();
 

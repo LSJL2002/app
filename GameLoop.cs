@@ -169,6 +169,11 @@ namespace TextRpg
                             }
                         }
                         break;
+                    default:
+                        Console.Clear();
+                        ErrorMessage();
+                        Thread.Sleep(1000);
+                        break;
                 }
             }
         }
